@@ -2,4 +2,10 @@ extends layout
 
 block content
   h1= title
-  p Welcome to #{title}
+  p This is a fake inventory manager to practice working with databases, Express, and Node. #[br]
+    | Anyone can add, remove, and edit all the items and categories.
+  
+  h2 Current Inventory Data Count
+  ul 
+    li Items: #{invCount}
+    li Categories: #{catCount}

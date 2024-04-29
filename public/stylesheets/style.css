@@ -1,8 +1,33 @@
-body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+:root {
+  font-size: clamp(16px, 2vmin, 20px);
+  font-family: "Lucida Grande", Helvetica, Arial, sans-serif;
+  line-height: 1.5;
 }
 
 a {
   color: #00B7FF;
+}
+
+/* Main Container */
+.container {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Sidebar Content */
+.sidebar-container {
+  max-width: 20%;
+  padding: 1.5rem;
+  padding-left: .8rem;
+}
+
+.sidebar-nav {
+  padding: 0;
+  list-style: none;
+}
+
+
+/* Main Content */
+main {
+  max-width: 80%;
 }
