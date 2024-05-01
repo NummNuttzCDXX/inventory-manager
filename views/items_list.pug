@@ -1,0 +1,12 @@
+extends layout 
+
+block content 
+	h1= title 
+	
+	if items.length 
+		ul 
+			each item in items 
+				li #[a.list-link(href=item.url)= item.name ] 
+					| #[span.faded (#{item.stock} in stock)]: $#{item.price}
+	else
+		p Unable to find instruments and equipment, try again later.
