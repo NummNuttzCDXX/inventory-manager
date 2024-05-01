@@ -1,0 +1,13 @@
+extends layout
+
+block content 
+	h1= title 
+	p= category.description
+
+	p #[strong: a(href=`/inventory/category/${category._id}`) Items in Category:] #{total}
+
+	if category.subCategories && category.subCategories.length > 0
+		h2 Sub-Categories 
+		ul 
+			each subCat in category.subCategories 
+				li: a(href=subCat.url)= subCat.name

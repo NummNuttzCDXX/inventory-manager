@@ -26,3 +26,21 @@ exports.categoryList = asyncHandler(async (req, res, next) => {
 		title: 'Categories', categories: cats, counts,
 	});
 });
+
+exports.categoryDetail = asyncHandler(async (req, res, next) => {
+	const cat = await Categories.findById(req.params.id)
+		.populate('subCategories');
+
+	// Check if `cat` is a sub-category
+	let query = {};
+	if (cat.subCategories) query = {category: req.params.id};
+	else query = {subCategory: req.params.id};
+
+	const total = await Instruments.countDocuments(query).exec();
+
+	res.render('category_detail', {
+		title: cat.name,
+		category: cat,
+		total,
+	});
+});
