@@ -1,0 +1,8 @@
+extends layout 
+
+block content 
+	h1=title
+	ul 
+		each cat, i in categories
+			li #[a.list-link(href= cat.url)= cat.name] 
+				| #[span.faded (#{counts[i]} in inventory)]

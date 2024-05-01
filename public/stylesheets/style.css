@@ -8,6 +8,15 @@ a {
   color: #00B7FF;
 }
 
+a.list-link {
+  color: inherit;
+  text-decoration: none;
+}
+a.list-link:hover {
+  color: #00B7FF;
+  text-decoration: underline;
+}
+
 /* Main Container */
 .container {
   display: flex;
@@ -30,4 +39,15 @@ a {
 /* Main Content */
 main {
   max-width: 80%;
+}
+
+main li{
+  margin: .5rem 0;
+  font-size: 1.05em;
+}
+
+/* Slightly smaller and faded text */
+.faded {
+  font-size: .8em;
+  color: rgb(96, 96, 96);
 }
