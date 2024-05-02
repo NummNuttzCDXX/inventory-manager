@@ -1,0 +1,24 @@
+extends layout 
+
+block content 
+	h1= item.name
+
+	.detail-container 
+		span #[strong Price:] $#{item.price}
+		span #[strong Stock:] #{item.stock}
+	hr
+
+	p= item.description
+	hr
+
+	ul.details-list
+		li Category: #{item.category.name}
+		if item.subCategory 
+			li Sub-Category: #{item.subCategory.name}
+		if item.brand 
+			li Brand: #{item.brand}
+	hr
+
+	.operation-container 
+		a(href=`/inventory/${item._id}/update`) Update
+		a(href=`/inventory/${item._id}/delete`) Delete

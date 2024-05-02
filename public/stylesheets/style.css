@@ -46,6 +46,26 @@ main li{
   font-size: 1.05em;
 }
 
+.detail-container {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.details-list {
+  padding: 0;
+  list-style: none;
+}
+
+.operation-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.operation-container a {
+  color: rgb(182, 9, 0);
+}
+
 /* Slightly smaller and faded text */
 .faded {
   font-size: .8em;

@@ -10,3 +10,15 @@ exports.itemsList = asyncHandler(async (req, res, next) => {
 		items,
 	});
 });
+
+exports.itemDetail = asyncHandler(async (req, res, next) => {
+	// Get item
+	const item = await Instruments.findById(req.params.id)
+		.populate(['category', 'subCategory']);
+
+	res.render('item_detail', {
+		// `Jasmine Accoustic Guitar`
+		title: `${item.brand} ${item.subCategory.name} ${item.category.name}`,
+		item,
+	});
+});

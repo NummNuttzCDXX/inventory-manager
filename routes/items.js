@@ -11,7 +11,7 @@ router.get('/', controller.itemsList);
 router.get('/category/:id');
 
 // GET Item Detail page
-router.get('/:id');
+router.get('/:id', controller.itemDetail);
 
 
 module.exports = router;
