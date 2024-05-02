@@ -8,5 +8,9 @@ block content
 			each item in items 
 				li #[a.list-link(href=item.url)= item.name ] 
 					| #[span.faded (#{item.stock} in stock)]: $#{item.price}
+
+	else if empty
+		p No #{title} at this time.
+
 	else
 		p Unable to find instruments and equipment, try again later.

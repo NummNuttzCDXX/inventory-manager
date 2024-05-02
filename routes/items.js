@@ -8,7 +8,7 @@ const controller = require('../controllers/instrumentController');
 router.get('/', controller.itemsList);
 
 // GET Items in Category
-router.get('/category/:id');
+router.get('/category/:id', controller.itemsInCategory);
 
 // GET Item Detail page
 router.get('/:id', controller.itemDetail);
