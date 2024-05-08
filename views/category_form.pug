@@ -1,0 +1,38 @@
+extends layout 
+//- Create Category Form
+block content 
+	h1= title 
+
+	form.cat-form(method="post") 
+		label(for="catName") Name: 
+		input#catName(type="text" name='catName' placeholder='Guitar' required value=category ? category.name : '')
+		
+		label(for="catDesc") Description: 
+		textarea#catDesc(name="catDesc" cols="20" rows="5" required placeholder='An instrument thats usually fretted and generally has 6 strings' value=category ? category.description : '') 
+
+		fieldset 
+			legend Is this a sub-category?
+
+			label(for="main") Main Category: 
+				input#main(type="radio" name="catType" checked required value='category')
+			label(for="subCat") Sub-Category: 
+				input#subCat(type="radio" name="catType" required value='sub')
+
+		fieldset.with-note
+			legend Choose sub-categories, if any
+			span.note.faded Sub-Categories cannot have their own sub-categories
+
+			label(for='none') None: 
+				input(type='checkbox' name='none' id='none' checked)
+
+			each cat in subCats
+				label(for=cat.name)= cat.name +':'
+					input(type='checkbox' name=cat.name id=cat.name)
+
+
+		button(type="submit") Create Category
+
+		if errors
+			ul
+				for error in errors
+					li!= error.msg

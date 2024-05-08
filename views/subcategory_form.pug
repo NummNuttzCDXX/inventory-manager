@@ -1,0 +1,15 @@
+extends layout 
+
+block content 
+	h1= title 
+	p Select parent categories for your new sub-category
+	
+	form(action="/categories/new/sub", method="post") 
+		//- Send name of newly created sub-category to server
+		input(type="hidden", name='newCat' value=category._id)
+
+		each item in categoryList 
+			label=item.name 
+				input(type='checkbox' name=item.name id=item.name)
+
+		button(type="submit") Submit
