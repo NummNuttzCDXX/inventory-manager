@@ -157,3 +157,103 @@ exports.createSubCategory_POST = asyncHandler(async (req, res, next) => {
 	// Go to newly created sub-category's page
 	res.redirect(subCat.url);
 });
+
+// Render Delete Category Form
+exports.deleteCategory = asyncHandler(async (req, res, next) => {
+	const category = await Categories.findById(req.params.id, 'name').exec();
+
+	res.render('category_delete', {
+		title: 'Delete Category',
+		delCat: category,
+		action: 'confirmation',
+	});
+});
+
+// POST - Delete Category
+exports.deleteCategory_POST = [
+	// Check if Deleted Category has subCats that are not connected to
+	// another parent category
+	asyncHandler(async (req, res, next) => {
+		const category = await Categories.findById(req.params.id).exec();
+
+		// If `category` IS a subCat OR HAS no subCats - move to next middleware
+		if (category.subCategories == null) return next();
+		else if (category.subCategories.length == 0) return next();
+		else if (req.params.action == 'confirmed') return next();
+
+
+		// `category` has subCats
+
+		/* Iterate and query each subCategory (without `await`) and
+		save each Promise to array.
+		Then, `await` all Promises at once through `Promise.all` */
+		const subCatPromises = [];
+		if (category.subCategories) {
+			category.subCategories.forEach((subId) => {
+				subCatPromises.push(
+					Categories.findById(subId).exec(),
+				);
+			});
+		}
+
+		const subCats = await Promise.all(subCatPromises);
+
+		const categoriesToDelete = [category];
+		// Check if subCats have a parent category
+		for (const subCat of subCats) {
+			// Count how many categories has this Sub-Category
+			const count =
+				await Categories.countDocuments({subCategories: subCat._id});
+
+			// subCat has another parent category - SKIP
+			if (count > 1) continue;
+
+			// subCat has no parent category - Push to delete
+			categoriesToDelete.push(subCat);
+		}
+
+		/* If there is more than 1 category to delete (category has sub-categories
+		that do not have another parent category),
+		Then render a confirmation page confirming the deletion of all said
+		categories and sub-categories */
+		if (categoriesToDelete.length > 1) {
+			return res.render('category_delete', {
+				title: 'Delete Categories',
+				delCat: categoriesToDelete,
+				action: 'confirmed',
+			});
+		}
+
+		next();
+	}),
+	// Delete categories
+	asyncHandler(async (req, res, next) => {
+		// eslint-disable-next-line guard-for-in
+		for (const cat in req.body) {
+			// Iterate through request body to get IDs
+			// For each ID, delete category
+			const catToDelete = await Categories.findById(req.body[cat]).exec();
+
+			// If is a sub-category
+			if (catToDelete.subCategories === null) {
+				const parentCat =
+					await Categories.findOne({subCategories: catToDelete._id});
+
+				if (parentCat) { // If parent is found
+					// Remove `catToDelete` ._id from parent subCategories array
+					const updatedSubCats =
+						parentCat.subCategories.filter((id) => id !== catToDelete._id);
+
+					// Update parent category's `subCategories` array
+					await parentCat.updateOne({$set: {subCategories: updatedSubCats}})
+						.exec();
+				}
+			}
+
+			await catToDelete.deleteOne();
+		}
+
+		// Render Category List page
+		res.redirect('/categories');
+	}),
+];

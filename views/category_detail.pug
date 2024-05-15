@@ -11,3 +11,8 @@ block content
 		ul 
 			each subCat in category.subCategories 
 				li: a(href=subCat.url)= subCat.name
+	hr
+
+	.operation-container 
+		a(href=`/categories/${category._id}/update`) Update
+		a(href=`/categories/${category._id}/delete`) Delete

@@ -67,6 +67,7 @@ main li{
 }
 
 .operation-container a {
+  width: fit-content;
   color: rgb(182, 9, 0);
 }
 
@@ -124,4 +125,8 @@ button[type=submit] {
 .faded {
   font-size: .8em;
   color: rgb(96, 96, 96);
+}
+
+button.align-left {
+  align-self: flex-start;
 }

@@ -16,5 +16,11 @@ router.post('/new/sub', controller.createSubCategory_POST);
 // GET Category Detail
 router.get('/:id', controller.categoryDetail);
 
+// GET Delete Category Page
+router.get('/:id/delete', controller.deleteCategory);
+
+// POST Delete Category Page
+router.post('/:id/:action/delete', controller.deleteCategory_POST);
+
 
 module.exports = router;

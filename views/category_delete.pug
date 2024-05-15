@@ -1,0 +1,31 @@
+extends layout 
+
+block content 
+	h1=title 
+
+	- let id = '';
+	if Array.isArray(delCat) && delCat.length > 1
+		- id = delCat[0]._id;
+
+		p Are you sure you want to delete the following Categories/Sub-Categories?
+		ul 
+			each item in delCat 
+				li= item.name 
+	else 
+		- id = delCat._id;
+		p Are you sure you want to delete Category: #{delCat.name}? If this category has Sub-Categories that 
+			| are not connected to any other Parent Category, those Sub-Categories will be deleted as well.
+
+	form(action=`/categories/${id}/${action}/delete` method='POST')
+		//- Save category & sub-category _id's to hidden inputs to send them to the server router
+		if !Array.isArray(delCat)
+			input(type='hidden' name='categoryId' value=delCat._id)
+		else 
+			each item in delCat 
+				input(type='hidden' name=item.name value=item._id)
+
+		button.align-left(type="submit") Delete
+
+	//- Separate CANCEL form to redirect to category_detail page
+	form(action=`/categories/${id}` method='GET')
+		button.align-left(type='submit') Cancel
