@@ -3,6 +3,7 @@ const Categories = require('../models/Categories');
 const Instruments = require('../models/Instruments');
 const asyncHandler = require('express-async-handler');
 const {body, validationResult} = require('express-validator');
+const mongoose = require('mongoose');
 
 exports.categoryList = asyncHandler(async (req, res, next) => {
 	// Get all categories
@@ -121,6 +122,7 @@ exports.createCategory_POST = [
 					title: 'Select Parent Category',
 					category: cat,
 					categoryList: allCategories,
+					action: '/categories/new/sub',
 				});
 			} else {
 				res.redirect(cat.url);
@@ -140,7 +142,7 @@ exports.createSubCategory_POST = asyncHandler(async (req, res, next) => {
 		if (box == 'newCat') continue; // Skip the hidden input
 
 		// Get the corrosponding category
-		const category = await Categories.findOne({name: box}).exec();
+		const category = await Categories.findById(box).exec();
 		const oldSubCats = category.subCategories;
 
 		// Push the new sub-category's ID to array
@@ -255,5 +257,180 @@ exports.deleteCategory_POST = [
 
 		// Render Category List page
 		res.redirect('/categories');
+	}),
+];
+
+// GET - Render Update Category Form
+exports.updateCategory = asyncHandler(async (req, res, next) => {
+	const category = await Categories.findById(req.params.id).exec();
+
+	res.render('category_update', {
+		title: 'Update Category',
+		cat: category,
+	});
+});
+
+// POST - Update Category
+exports.updateCategory_POST = [
+	// Validate/Sanitize Name
+	body('name', 'Name must not be empty')
+		.trim()
+		.isLength({min: 3})
+		.escape(),
+	// Validate/Sanitize Desc
+	body('desc', 'Description must contain at least 5 characters')
+		.trim()
+		.isLength({min: 5})
+		.escape(),
+
+	// First check if category type changed (main cat to subCat)
+	asyncHandler(async (req, res, next) => {
+		const category = await Categories.findById(req.params.id).exec();
+
+		// Unchanged
+		if ((category.subCategories == null && req.body.catType == 'sub') ||
+			(category.subCategories != null && req.body.catType == 'main')) next();
+
+		const proms = [];
+		// Was a subCat, now a mainCat
+		if (req.body.catType == 'main') {
+			proms.push(category.updateOne({subCategories: []}).exec());
+
+			// Remove category from old parent categories
+			const oldParents = await Categories.find({subCategories: category._id})
+				.exec();
+
+			for (const parent of oldParents) {
+				const filteredArray = parent.subCategories.filter((id) => {
+					return !id.equals(category._id);
+				});
+
+				proms.push(parent.updateOne({subCategories: filteredArray}).exec());
+			}
+
+		// Was a mainCat, now a subCat
+		} else if (req.body.catType == 'sub') {
+			proms.push(category.updateOne({subCategories: null}).exec());
+		}
+
+		await Promise.all(proms); // Await all updated at once
+		next();
+	}),
+
+	asyncHandler(async (req, res, next) => {
+		if (req.body.newCat) return next();
+
+
+		const errs = validationResult(req);
+		// If there are errors render form again with sanitized data
+		if (!errs.isEmpty()) {
+			const category = await Categories.findById(req.params.id).exec();
+
+			res.render('category_update', {
+				title: 'Update Category',
+				cat: category,
+				name: req.body.name,
+				desc: req.body.desc,
+				errors: errs.array(),
+			});
+		}
+
+		// Create new category with updated data
+		// `subCategories` field left blank for now
+		const updatedCat = await Categories.findByIdAndUpdate(req.params.id, {
+			name: req.body.name,
+			description: req.body.desc,
+		});
+
+		if (req.body.catType == 'sub') { // SubCat
+			// Get Parents
+			const parentCategories = await Categories.find({
+				subCategories: {$ne: null},
+			}, 'name subCategories')
+				.sort('name')
+				.exec();
+
+			return res.render('subcategory_form', {
+				title: 'Select Parent Category',
+				category: updatedCat,
+				categoryList: parentCategories,
+			});
+		} else if (req.body.catType == 'main') { // Main Cat
+			// Get Sub-Categories
+			const subCategories = await Categories.find({subCategories: null})
+				.sort('name')
+				.exec();
+
+			return res.render('subcategory_form', {
+				title: 'Select Sub-Categories',
+				category: updatedCat,
+				categoryList: subCategories,
+			});
+		}
+	}),
+
+	// Update `subCategories` field
+	asyncHandler(async (req, res, next) => {
+		const updatedCat = await Categories.findById(req.body.newCat).exec();
+
+		// Main Category
+		if (updatedCat.subCategories !== null) {
+			const subCats = updatedCat.subCategories;
+
+			// Iterate selected checkboxs
+			for (const box in req.body) {
+				if (box == 'newCat' || box == 'name' || box == 'desc') continue;
+
+				// Push selected subCat ._id to array
+				if (!updatedCat.subCategories.includes(box)) {
+					subCats.push(new mongoose.Types.ObjectId(box));
+				}
+			}
+
+			await updatedCat.updateOne({$set: {subCategories: subCats}})
+				.exec();
+
+		// Sub-Category
+		} else if (updatedCat.subCategories === null) {
+			const newParents = [];
+			// Add `updatedCategory`s ._id to each parent's array
+			for (const box in req.body) { // For each checked box
+				if (box == 'newCat' || box == 'name' || box == 'desc') continue;
+
+				// Get the corrosponding category
+				const category = await Categories.findById(box).exec();
+				const oldSubCats = category.subCategories;
+
+				// Push the new sub-category's ID to array
+				if (!oldSubCats.includes(updatedCat._id)) oldSubCats.push(updatedCat._id); // eslint-disable-line max-len
+
+				// Update the category
+				await category.updateOne({$set: {subCategories: oldSubCats}})
+					.exec();
+
+				newParents.push(category._id);
+			}
+
+
+			// Remove updatedCat from any old parents
+			const allParents = await Categories.find({subCategories: updatedCat._id})
+				.exec();
+
+			for (let i = 0; i < allParents.length; i++) {
+				const oldParent = allParents[i];
+
+				// If oldParent is NOT in newParents
+				if (!newParents.some((id) => id.equals(oldParent._id))) {
+					const updatedArray = oldParent.subCategories.filter((item) => {
+						return !item.equals(updatedCat._id);
+					});
+
+					await oldParent.updateOne({$set: {subCategories: updatedArray}})
+						.exec();
+				}
+			}
+		}
+
+		res.redirect(updatedCat.url);
 	}),
 ];

@@ -2,14 +2,26 @@ extends layout
 
 block content 
 	h1= title 
-	p Select parent categories for your new sub-category
+
+	-
+		let txt = 'Select parent categories for your new sub-category';
+		if (title.includes('Sub')) {
+			txt = 'Select Sub-Categories for your new Category';
+		}
+
+	p= txt
 	
-	form(action="/categories/new/sub", method="post") 
+	form(action=action || '', method="post") 
 		//- Send name of newly created sub-category to server
 		input(type="hidden", name='newCat' value=category._id)
 
 		each item in categoryList 
+			-
+				let check = false;
+				if (category.subCategories) check = category.subCategories.includes(item._id);
+				else check = item.subCategories.includes(category._id);
+			
 			label=item.name 
-				input(type='checkbox' name=item.name id=item.name)
+				input(type='checkbox' name=item._id id=item.name checked=check)
 
 		button(type="submit") Submit

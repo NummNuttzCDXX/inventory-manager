@@ -1,0 +1,29 @@
+extends layout 
+
+block content 
+	h1= title 
+
+	form.cat-form(method='post')
+		label(for='name') Name: 
+		input#name(type='text' name='name' value=name || cat.name required)
+
+		label(for='desc') Description: 
+		textarea#desc(name="desc", cols="20", rows="5" required)=desc || cat.description
+
+		fieldset 
+			legend Select the type of category 
+
+			- const main = cat.subCategories !== null;
+
+			label Main Category 
+				input(type='radio' name='catType' value='main' checked=main required)
+
+			label Sub-Category 
+				input(type='radio' name='catType' value='sub' checked=!main required)
+
+		button(type='submit') Update
+
+	if errors
+			ul
+				for error in errors
+					li!= error.msg
