@@ -74,22 +74,13 @@ exports.createCategory_POST = [
 
 	// Create Category
 	asyncHandler(async (req, res, next) => {
+		if (req.body.newCat) return next();
+
 		// Extract Errors from request
 		const errs = validationResult(req);
 
-		// Get sub-categories, if any
-		let subCats = [];
-		const subCategories = await Categories.find({subCategories: null}, 'name')
-			.sort('name').exec();
-		if (req.body.catType === 'category') { // If NOT sub-category
-			// Iterate subCategories in DB
-			for (const item of subCategories) {
-				// If corrosponding checkbox is checked, push ID to arr
-				if (req.body[item.name] === 'on') subCats.push(item._id);
-			}
-		} else subCats = null;
-
 		// Create a category with sanitized data
+		const subCats = req.body.catType == 'category' ? [] : null;
 		const cat = new Categories({
 			name: req.body.catName,
 			description: req.body.catDesc,
@@ -103,62 +94,77 @@ exports.createCategory_POST = [
 				title: 'Create Category/Sub-Category',
 				subCats: subCategories,
 				category: cat,
-				errors: errs,
+				errors: errs.array(),
 			});
 		} else {
-			// No errors, save category & redirect to detail page
+			// No errors, save category
 			await cat.save();
 
 			// If a new Sub-Category is created
 			if (cat.subCategories == null) {
 				const allCategories = await Categories.find({
 					subCategories: {$ne: null},
-				}, 'name')
+				})
 					.sort('name').exec();
 
 				// Render new form to select a parent category for the new
 				// sub-category to belong to
-				res.render('subcategory_form', {
+				return res.render('subcategory_form', {
 					title: 'Select Parent Category',
 					category: cat,
 					categoryList: allCategories,
-					action: '/categories/new/sub',
 				});
 			} else {
-				res.redirect(cat.url);
+				const subCategories = await Categories.find({subCategories: null})
+					.sort('name').exec();
+
+				// Render new form to select sub-categories for the new parent
+				// category to belong to
+				return res.render('subcategory_form', {
+					title: 'Select Sub-Categories',
+					category: cat,
+					categoryList: subCategories,
+				});
 			}
 		}
 	}),
+	// Add parent/sub categories
+	asyncHandler(async (req, res, next) => {
+		const newCat = await Categories.findById(req.body.newCat).exec();
+
+		// Main Category
+		if (newCat.subCategories !== null) {
+			const subCats = [];
+			for (const box in req.body) {
+				if (box == 'newCat' || box == 'catName' || box == 'catDesc') continue;
+
+				subCats.push(box);
+			}
+
+			await newCat.updateOne({subCategories: subCats}).exec();
+
+		// Sub-Category
+		} else {
+			const proms = [];
+			for (const box in req.body) {
+				if (box == 'newCat' || box == 'catName' || box == 'catDesc') continue;
+
+				// Get parent
+				const newParent = await Categories.findById(box).exec();
+
+				const subs = newParent.subCategories;
+				subs.push(newCat._id); // Push newCat._id
+
+				// Update parent - NO AWAIT
+				proms.push(newParent.updateOne({subCategories: subs}).exec());
+			}
+
+			await Promise.all(proms); // Await all updates at once
+		}
+
+		res.redirect(newCat.url);
+	}),
 ];
-
-// POST - Create new sub-category
-// Add newly created SubCat to the Parent Category's `subCategories` array
-exports.createSubCategory_POST = asyncHandler(async (req, res, next) => {
-	// Get the newly created sub-category
-	const subCat = await Categories.findById(req.body.newCat).exec();
-
-	// For each checked box
-	for (const box in req.body) {
-		if (box == 'newCat') continue; // Skip the hidden input
-
-		// Get the corrosponding category
-		const category = await Categories.findById(box).exec();
-		const oldSubCats = category.subCategories;
-
-		// Push the new sub-category's ID to array
-		oldSubCats.push(subCat._id);
-
-		// Update the category
-		await Categories.findByIdAndUpdate(category._id, {
-			name: category.name,
-			description: category.description,
-			subCategories: oldSubCats,
-		}, {});
-	}
-
-	// Go to newly created sub-category's page
-	res.redirect(subCat.url);
-});
 
 // Render Delete Category Form
 exports.deleteCategory = asyncHandler(async (req, res, next) => {
@@ -203,6 +209,8 @@ exports.deleteCategory_POST = [
 		const categoriesToDelete = [category];
 		// Check if subCats have a parent category
 		for (const subCat of subCats) {
+			if (!subCat) continue; // Not found
+
 			// Count how many categories has this Sub-Category
 			const count =
 				await Categories.countDocuments({subCategories: subCat._id});
