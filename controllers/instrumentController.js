@@ -151,3 +151,21 @@ exports.itemDetail = asyncHandler(async (req, res, next) => {
 		item,
 	});
 });
+
+exports.deleteItem = asyncHandler(async (req, res, next) => {
+	const item = await Instruments.findById(req.params.id, 'name').exec();
+
+	res.render('item_delete', {
+		title: 'Delete Item',
+		item: item,
+	});
+});
+
+exports.deleteItem_POST = asyncHandler(async (req, res, next) => {
+	// Item doesnt have dependencies to delete
+	// Just delete item
+	await Instruments.findByIdAndDelete(req.params.id).exec();
+
+	// Redirect to Items List
+	res.redirect('/inventory');
+});

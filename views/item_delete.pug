@@ -1,0 +1,11 @@
+extends layout 
+
+block content 
+	h1= title 
+	p Are you sure you want to permenently delete #[strong #{item.name}] from inventory?
+
+	form(method='POST')
+		button.align-left(type='submit') Delete
+
+	form(action=`/inventory/${item._id}` method='GET')
+		button.align-left(type='submit') Cancel

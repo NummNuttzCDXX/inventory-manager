@@ -19,5 +19,11 @@ router.get('/category/:id', controller.itemsInCategory);
 // GET Item Detail page
 router.get('/:id', controller.itemDetail);
 
+// GET Delete Item page
+router.get('/:id/delete', controller.deleteItem);
+
+// POST Delete Item
+router.post('/:id/delete', controller.deleteItem_POST);
+
 
 module.exports = router;
