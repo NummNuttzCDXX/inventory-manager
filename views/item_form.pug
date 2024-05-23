@@ -1,0 +1,38 @@
+extends layout 
+
+block content 
+	h1= title 
+	
+	form.cat-form(method='POST')
+		label(for='name') Name: 
+		input#name(type='text' name='name' required placeholder='Jackson Pro Plus Series Rhoads RR24 Mirror Electric Guitar Mirror' value=name||'')
+
+		label(for='desc') Description: 
+		textarea#desc(name='desc' cols="20" rows="5" placeholder="The Jackson Pro Plus Series Rhoads RR24 Mirror electric guitar brings together sophisticated design and high-tech components to meet the needs of today's shredders.This Rhoads model from Jackson, the originator of the distinctive shape, pairs a resonant okoume body with a striking mirror top.Its fast, versatile maple and walnut neck is engineered for blazing speed.The 12\"-16\" compound radius ebony fingerboard has 24 jumbo frets for heavy riffing and fast solos." required)=desc || ''
+
+		label Brand: #[span.faded (optional)]
+			input(type='text' name='brand' placeholder='Jackson' value=brand || '')
+
+		if cats
+			fieldset 
+				legend Select a Category 
+
+				each cat in cats 
+					label= cat.name 
+						input(type='radio' name='category' value=cat._id checked=category==cat._id required)
+		else 
+			p There are no categories to place this item into.#[br]Please create a category to continue.
+
+		label Price: $
+			input(type='number' name='price' step='.01' min=0 value=price || '1.00' required)
+
+		label Stock: 
+			input(type='number' name='stock' step=1 min=0 value=stock || '1' required)
+
+		button(type='submit') Submit
+
+
+	if errs
+		ul 
+			each err in errs 
+				li= err.msg 

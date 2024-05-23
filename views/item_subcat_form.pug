@@ -1,0 +1,15 @@
+extends layout 
+
+block content 
+	h1 #{title} #[span.faded (optional)]
+
+	form(method='post')
+		input(type='hidden' name='newItem' value=item._id)
+
+		label No Sub-Category
+			input(type='radio' name='subCat' value='none')
+		each sub in subCategories 
+			label= sub.name
+				input(type='radio' name='subCat' value=sub._id)
+
+		button(type='submit') Submit
