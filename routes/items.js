@@ -25,5 +25,11 @@ router.get('/:id/delete', controller.deleteItem);
 // POST Delete Item
 router.post('/:id/delete', controller.deleteItem_POST);
 
+// GET Update Item page
+router.get('/:id/update', controller.updateItem);
+
+// POST Update Item
+router.post('/:id/update', controller.updateItem_POST);
+
 
 module.exports = router;

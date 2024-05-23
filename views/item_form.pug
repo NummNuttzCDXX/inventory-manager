@@ -19,7 +19,7 @@ block content
 
 				each cat in cats 
 					label= cat.name 
-						input(type='radio' name='category' value=cat._id checked=category==cat._id required)
+						input(type='radio' name='category' value=cat._id checked=category==cat._id.toString() required)
 		else 
 			p There are no categories to place this item into.#[br]Please create a category to continue.
 

@@ -96,7 +96,7 @@ exports.createItem_POST = [
 		const item = await Instruments.findById(req.body.newItem).exec();
 
 		// Add subCat to Item
-		if (req.body.subCat) {
+		if (req.body.subCat != 'none') {
 			await item.updateOne({subCategory: req.body.subCat}).exec();
 		}
 
@@ -169,3 +169,105 @@ exports.deleteItem_POST = asyncHandler(async (req, res, next) => {
 	// Redirect to Items List
 	res.redirect('/inventory');
 });
+
+exports.updateItem = asyncHandler(async (req, res, next) => {
+	// Render same form as 'createItem' with data already filled in
+	const [categories, item] = await Promise.all([
+		Categories.find({subCategories: {$ne: null}}, 'name')
+			.sort('name').exec(),
+		Instruments.findById(req.params.id).exec(),
+	]);
+
+	res.render('item_form', {
+		title: 'Update Item',
+		cats: categories,
+		name: item.name, desc: item.description,
+		brand: item.brand || '',
+		price: item.price, stock: item.stock,
+		category: item.category,
+	});
+});
+
+exports.updateItem_POST = [
+	// Sanitize data
+	body('name', 'Name must not be empty')
+		.trim()
+		.isLength({min: 5})
+		.withMessage('Name must have at least 5 characters')
+		.escape(),
+	body('desc', 'Description must not be empty')
+		.trim()
+		.isLength({min: 1})
+		.escape(),
+
+	// Update item
+	asyncHandler(async (req, res, next) => {
+		if (req.body.newItem) return next();
+
+		const errors = validationResult(req);
+
+		// If there are errors
+		if (!errors.isEmpty()) {
+			// Re-render form with sanitized data
+			const cats = await Categories.find({subCategories: {$ne: null}}).exec();
+
+			res.render('item_form', {
+				title: 'Update Item',
+				cats,
+				name: req.body.name,
+				desc: req.body.desc,
+				brand: req.body.brand,
+				category: req.body.category,
+				price: req.body.price,
+				stock: req.body.stock,
+				errs: errors.array(),
+			});
+			return;
+		}
+
+		const itemConfig = {
+			name: req.body.name,
+			description: req.body.desc,
+			category: req.body.category,
+			price: req.body.price,
+			stock: req.body.stock,
+		}; // Brand not required
+		if (req.body.brand) itemConfig.brand = req.body.brand;
+
+		const item = await Instruments.findByIdAndUpdate(req.params.id, itemConfig);
+
+		// Remove brand if brand is empty
+		if (!req.body.brand) {
+			await item.updateOne({$unset: {brand: ''}}).exec();
+		}
+
+		// Check if selected category has sub-categories
+		const category = await Categories.findById(req.body.category)
+			.populate('subCategories').exec();
+		if (category.subCategories.length > 0) {
+			return res.render('item_subcat_form', {
+				title: 'Select a Sub-Category',
+				item: item,
+				subCategories: category.subCategories,
+			});
+		}
+
+		next();
+	}),
+	asyncHandler(async (req, res, next) => {
+		const item = await Instruments.findById(req.params.id).exec();
+
+		// Add sub-category if one is selected
+		if (req.body.subCat && req.body.subCat != 'none') {
+			await item.updateOne({
+				subCategory: req.body.subCat,
+			}).exec();
+		} else { // Remove sub-category if one is NOT selected
+			await item.updateOne({
+				$unset: {subCategory: ''},
+			}).exec();
+		}
+
+		res.redirect(`/inventory/${item._id}`);
+	}),
+];
