@@ -14,6 +14,9 @@ block content
 	form(method="post") 
 		//- Send name of newly created sub-category to server
 		input(type="hidden", name='newCat' value=category._id)
+		//- Send authorized user password to server
+		if auth 
+			input(type='hidden' name='pass' value=auth)
 
 		each item in categoryList 
 			-

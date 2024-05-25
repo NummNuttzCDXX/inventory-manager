@@ -1,0 +1,16 @@
+extends layout 
+
+block content 
+	h1=title 
+	p Only authorized users may perform destructive actions. #[br]
+		| Enter password to confirm authorization 
+
+	form(method='POST')
+		label Password: 
+			input(type='password' name='pass' required)
+
+		//- Send the previous request's body to the next request with hidden inputs
+		each val, key in body 
+			input(type='hidden' name=key value=val)
+
+		button(type='submit') Submit Password

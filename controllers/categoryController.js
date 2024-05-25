@@ -4,6 +4,7 @@ const Instruments = require('../models/Instruments');
 const asyncHandler = require('express-async-handler');
 const {body, validationResult} = require('express-validator');
 const mongoose = require('mongoose');
+const authenticateUser = require('../public/javascripts/adminAuth');
 
 exports.categoryList = asyncHandler(async (req, res, next) => {
 	// Get all categories
@@ -179,6 +180,9 @@ exports.deleteCategory = asyncHandler(async (req, res, next) => {
 
 // POST - Delete Category
 exports.deleteCategory_POST = [
+	// Authorize User
+	authenticateUser,
+
 	// Check if Deleted Category has subCats that are not connected to
 	// another parent category
 	asyncHandler(async (req, res, next) => {
@@ -240,6 +244,8 @@ exports.deleteCategory_POST = [
 	asyncHandler(async (req, res, next) => {
 		// eslint-disable-next-line guard-for-in
 		for (const cat in req.body) {
+			if (cat == 'pass') continue;
+
 			// Iterate through request body to get IDs
 			// For each ID, delete category
 			const catToDelete = await Categories.findById(req.body[cat]).exec();
@@ -280,6 +286,9 @@ exports.updateCategory = asyncHandler(async (req, res, next) => {
 
 // POST - Update Category
 exports.updateCategory_POST = [
+	// Authorize User
+	authenticateUser,
+
 	// Validate/Sanitize Name
 	body('name', 'Name must not be empty')
 		.trim()
@@ -362,6 +371,7 @@ exports.updateCategory_POST = [
 				title: 'Select Parent Category',
 				category: updatedCat,
 				categoryList: parentCategories,
+				auth: req.body.pass,
 			});
 		} else if (req.body.catType == 'main') { // Main Cat
 			// Get Sub-Categories
@@ -373,6 +383,7 @@ exports.updateCategory_POST = [
 				title: 'Select Sub-Categories',
 				category: updatedCat,
 				categoryList: subCategories,
+				auth: req.body.pass,
 			});
 		}
 	}),
@@ -387,7 +398,8 @@ exports.updateCategory_POST = [
 
 			// Iterate selected checkboxs
 			for (const box in req.body) {
-				if (box == 'newCat' || box == 'name' || box == 'desc') continue;
+				if (box == 'newCat' || box == 'name' || box == 'desc' ||
+					box == 'pass') continue;
 
 				// Push selected subCat ._id to array
 				if (!updatedCat.subCategories.includes(box)) {
@@ -403,7 +415,8 @@ exports.updateCategory_POST = [
 			const newParents = [];
 			// Add `updatedCategory`s ._id to each parent's array
 			for (const box in req.body) { // For each checked box
-				if (box == 'newCat' || box == 'name' || box == 'desc') continue;
+				if (box == 'newCat' || box == 'name' || box == 'desc' ||
+					box == 'pass') continue;
 
 				// Get the corrosponding category
 				const category = await Categories.findById(box).exec();

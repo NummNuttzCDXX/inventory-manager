@@ -3,6 +3,7 @@ const Instruments = require('../models/Instruments');
 const Categories = require('../models/Categories');
 const asyncHandler = require('express-async-handler');
 const {body, validationResult} = require('express-validator');
+const authenticateUser = require('../public/javascripts/adminAuth');
 
 exports.itemsList = asyncHandler(async (req, res, next) => {
 	const items = await Instruments.find({}).sort('category subCategory').exec();
@@ -161,14 +162,18 @@ exports.deleteItem = asyncHandler(async (req, res, next) => {
 	});
 });
 
-exports.deleteItem_POST = asyncHandler(async (req, res, next) => {
-	// Item doesnt have dependencies to delete
-	// Just delete item
-	await Instruments.findByIdAndDelete(req.params.id).exec();
+exports.deleteItem_POST = [
+	authenticateUser,
+	// User is authorized - Delete item
+	asyncHandler(async (req, res, next) => {
+		// Item doesnt have dependencies to delete
+		// Just delete item
+		await Instruments.findByIdAndDelete(req.params.id).exec();
 
-	// Redirect to Items List
-	res.redirect('/inventory');
-});
+		// Redirect to Items List
+		res.redirect('/inventory');
+	}),
+];
 
 exports.updateItem = asyncHandler(async (req, res, next) => {
 	// Render same form as 'createItem' with data already filled in
@@ -189,6 +194,9 @@ exports.updateItem = asyncHandler(async (req, res, next) => {
 });
 
 exports.updateItem_POST = [
+	// Authorize User
+	authenticateUser,
+
 	// Sanitize data
 	body('name', 'Name must not be empty')
 		.trim()
@@ -200,7 +208,7 @@ exports.updateItem_POST = [
 		.isLength({min: 1})
 		.escape(),
 
-	// Update item
+	// User is authorized - Update item
 	asyncHandler(async (req, res, next) => {
 		if (req.body.newItem) return next();
 
