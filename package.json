@@ -7,6 +7,9 @@
     "serverStart": "SET DEBUG=inventory-manager:* & npm run devStart",
     "devStart": "nodemon ./bin/www"
   },
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "dependencies": {
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
