@@ -19,6 +19,9 @@ router.get('/category/:id', controller.itemsInCategory);
 // GET Item Detail page
 router.get('/:id', controller.itemDetail);
 
+// GET Item Image
+router.get('/:id/img', controller.itemImg);
+
 // GET Delete Item page
 router.get('/:id/delete', controller.deleteItem);
 

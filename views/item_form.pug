@@ -3,12 +3,29 @@ extends layout
 block content 
 	h1= title 
 	
-	form.cat-form(method='POST')
+	form.cat-form(method='POST' enctype='multipart/form-data')
 		label(for='name') Name: 
 		input#name(type='text' name='name' required placeholder='Jackson Pro Plus Series Rhoads RR24 Mirror Electric Guitar Mirror' value=name||'')
 
 		label(for='desc') Description: 
 		textarea#desc(name='desc' cols="20" rows="5" placeholder="The Jackson Pro Plus Series Rhoads RR24 Mirror electric guitar brings together sophisticated design and high-tech components to meet the needs of today's shredders.This Rhoads model from Jackson, the originator of the distinctive shape, pairs a resonant okoume body with a striking mirror top.Its fast, versatile maple and walnut neck is engineered for blazing speed.The 12\"-16\" compound radius ebony fingerboard has 24 jumbo frets for heavy riffing and fast solos." required)=desc || ''
+
+		- const imgSelectStyle = !img || !img.buffer ? 'padding-top: .35em;' : '';
+		fieldset.img-select(style=imgSelectStyle)
+			legend Select Image 
+
+			if img && img.buffer
+				span.note If an image was selected previously and you want to keep it, leave it blank. 
+					| Otherwise, select a new image or check the Remove Image box.
+
+			.img-select-container 
+				span.faded File must not be larger than 16mb
+				label(for='img') Image: #[span.faded (optional)]
+					input#img(type='file' name='img')
+				
+				if img && img.buffer
+					label Remove Current Image: 
+						input(type='checkbox' name='removeImg')
 
 		label Brand: #[span.faded (optional)]
 			input(type='text' name='brand' placeholder='Jackson' value=brand || '')

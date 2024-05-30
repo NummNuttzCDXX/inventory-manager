@@ -12,5 +12,7 @@ block content
 		//- Send the previous request's body to the next request with hidden inputs
 		each val, key in body 
 			input(type='hidden' name=key value=val)
+		if file 
+			input(type='hidden' name='file' value=file)
 
 		button(type='submit') Submit Password

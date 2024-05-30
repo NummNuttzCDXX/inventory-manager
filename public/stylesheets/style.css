@@ -50,6 +50,10 @@ main li{
   font-size: 1.05em;
 }
 
+.item-img {
+  max-height: 40vh;
+}
+
 .detail-container {
   display: flex;
   flex-direction: column;
@@ -99,6 +103,11 @@ input[type=text], textarea {
 
 fieldset.with-note {
   padding-top: 1.5rem;
+}
+
+fieldset.img-select {
+  padding-top: 3.5rem;
+  flex-direction: column;
 }
 
 .cat-form fieldset .note {

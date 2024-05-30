@@ -4,6 +4,8 @@ const Categories = require('../models/Categories');
 const asyncHandler = require('express-async-handler');
 const {body, validationResult} = require('express-validator');
 const authenticateUser = require('../public/javascripts/adminAuth');
+const multer = require('multer');
+const upload = multer();
 
 exports.itemsList = asyncHandler(async (req, res, next) => {
 	const items = await Instruments.find({}).sort('category subCategory').exec();
@@ -26,6 +28,8 @@ exports.createItem = asyncHandler(async (req, res, next) => {
 });
 
 exports.createItem_POST = [
+	upload.single('img'),
+
 	// Validate fields / Sanitize
 	body('name', 'Name must not be empty')
 		.trim()
@@ -53,6 +57,13 @@ exports.createItem_POST = [
 			stock: req.body.stock,
 		};
 		if (req.body.brand.length > 0) itemConfig.brand = req.body.brand;
+		// If an image is given
+		if (req.file) {
+			itemConfig.img = {
+				mimeType: req.file.mimetype,
+				buffer: req.file.buffer,
+			};
+		}
 
 		const item = new Instruments(itemConfig);
 
@@ -105,6 +116,15 @@ exports.createItem_POST = [
 		res.redirect(item.url);
 	}),
 ];
+
+// GET Image
+exports.itemImg = asyncHandler(async (req, res) => {
+	const item = await Instruments.findById(req.params.id, 'img').exec();
+
+	// Serve the image buffer
+	res.set('Content-Type', item.img.mimeType);
+	res.send(item.img.buffer);
+});
 
 exports.itemsInCategory = asyncHandler(async (req, res, next) => {
 	// First GET items in category
@@ -190,10 +210,13 @@ exports.updateItem = asyncHandler(async (req, res, next) => {
 		brand: item.brand || '',
 		price: item.price, stock: item.stock,
 		category: item.category,
+		img: item.img,
 	});
 });
 
 exports.updateItem_POST = [
+	upload.single('img'),
+
 	// Authorize User
 	authenticateUser,
 
@@ -217,7 +240,10 @@ exports.updateItem_POST = [
 		// If there are errors
 		if (!errors.isEmpty()) {
 			// Re-render form with sanitized data
-			const cats = await Categories.find({subCategories: {$ne: null}}).exec();
+			const [cats, imgData] = await Promise.all([
+				Categories.find({subCategories: {$ne: null}}).exec(),
+				Instruments.findById(req.params.id, 'img').exec(),
+			]);
 
 			res.render('item_form', {
 				title: 'Update Item',
@@ -228,6 +254,7 @@ exports.updateItem_POST = [
 				category: req.body.category,
 				price: req.body.price,
 				stock: req.body.stock,
+				img: imgData.img,
 				errs: errors.array(),
 			});
 			return;
@@ -241,8 +268,18 @@ exports.updateItem_POST = [
 			stock: req.body.stock,
 		}; // Brand not required
 		if (req.body.brand) itemConfig.brand = req.body.brand;
+		if (req.file || req.body.file) {
+			const path = req.file ? req.file : JSON.parse(req.body.file);
+			itemConfig.img = {
+				buffer: path.buffer,
+				mimeType: path.mimeType,
+			};
+		}
 
 		const item = await Instruments.findByIdAndUpdate(req.params.id, itemConfig);
+		if (req.body.removeImg == 'on') { // If img needs to be removed
+			await item.updateOne({$unset: {img: ''}});
+		}
 
 		// Remove brand if brand is empty
 		if (!req.body.brand) {
@@ -257,6 +294,7 @@ exports.updateItem_POST = [
 				title: 'Select a Sub-Category',
 				item: item,
 				subCategories: category.subCategories,
+				auth: req.body.pass,
 			});
 		}
 

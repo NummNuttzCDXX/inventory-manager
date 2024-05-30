@@ -13,6 +13,18 @@ const instrumentSchema = new Schema({
 	// Optional sub-category
 	subCategory: {type: Schema.Types.ObjectId, ref: 'Category'},
 	stock: {type: Number, required: true},
+	img: {
+		buffer: {type: Schema.Types.Buffer},
+		mimeType: {type: String},
+	},
+});
+
+// Pre-save hook to omit img field if it's not properly set
+instrumentSchema.pre('save', function(next) {
+	if (this.img && (!this.img.buffer || !this.img.mimeType)) {
+		this.img = undefined;
+	}
+	next();
 });
 
 // Virtual for URL

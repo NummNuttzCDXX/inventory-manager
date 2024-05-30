@@ -5,6 +5,8 @@ block content
 
 	form(method='post')
 		input(type='hidden' name='newItem' value=item._id)
+		if auth 
+			input(type='hidden' name='pass' value=auth)
 
 		label No Sub-Category
 			input(type='radio' name='subCat' value='none')

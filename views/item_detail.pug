@@ -3,12 +3,15 @@ extends layout
 block content 
 	h1= item.name
 
+	if item.img && item.img.buffer
+		img.item-img(src=`/inventory/${item._id}/img` alt=item.name)
+
 	.detail-container 
 		span #[strong Price:] $#{item.price}
 		span #[strong Stock:] #{item.stock}
 	hr
 
-	p= item.description
+	p!= item.description
 	hr
 
 	ul.details-list
